@@ -600,6 +600,38 @@ class TestSerializers(unittest.TestCase):
         u_bin = s.encode(u_str)
         self.assertEqual(u_str, s.decode(u_bin))
 
+class TestNetworkX(unittest.TestCase):
+    def setUp(self):
+        try:
+            import networkx
+        except ImportError:
+            self.skipTest('networkx not installed')
+        fd, path = tempfile.mkstemp()
+        os.close(fd)
+        self.g = Graph(path, nosync=True, nometasync=True, serialize_property_value=Serializer.msgpack())
+
+    def tearDown(self):
+        self.g.delete()
+
+    def test_to_networkx(self):
+        from LemonGraph.nx import to_networkx
+        with self.g.transaction(write=True) as txn:
+            load_data(txn)
+            txn['gp'] = 'gv'
+            G = to_networkx(txn)
+            self.assertEqual(G.number_of_nodes(), 3)
+            self.assertEqual(G.number_of_edges(), 2)
+            self.assertEqual(G.graph, {'gp': 'gv'})
+            n0 = txn.node(**node(0))
+            self.assertEqual(G.nodes[n0.ID], {'type': 'foo', 'value': 'bar', 'np1k': 'np1v'})
+            e = next(iter(txn.edges(type='edge')))
+            self.assertEqual(G.edges[e.srcID, e.tgtID, e.ID], {'type': 'edge', 'value': 'e1'})
+            G = to_networkx(txn, node_type='foo')
+            self.assertEqual((G.number_of_nodes(), G.number_of_edges()), (2, 1))
+            G = to_networkx(txn, edge_type='edge2')
+            self.assertEqual((G.number_of_nodes(), G.number_of_edges()), (3, 1))
+
+
 class TestDL(unittest.TestCase):
     def test_dirlist(self):
         a = os.listdir('/')
