@@ -87,9 +87,11 @@ completed success  1m8s
 test (3.9) success / test (3.10) success / test (3.11) success / test (3.12) success / test (3.13) success
 ```
 
-Not verified: the README's exact apt line in clean `ubuntu:22.04`/`ubuntu:24.04` containers - the docker run
-was killed by host memory pressure and docker runs were then disallowed. CI covers ubuntu-24.04 with
-setup-python + `libffi-dev`; the 22.04 apt recipe (`python3-dev python3-venv`) is untested.
+Review (2026-11-17): the README apt line was run in clean `ubuntu:24.04` and `ubuntu:22.04` containers
+(`docker run --rm ubuntu:XX.04`, `apt-get install -y gcc make git curl libffi-dev python3-dev python3-venv`,
+`python3 -m venv venv`, `pip install .`, `python test.py`): both install and pass 32 tests. The commit was
+re-squashed in review with `actions/checkout@v5` / `actions/setup-python@v6` (the v4/v5 majors trigger a
+Node 20 deprecation annotation on every job); tree otherwise unchanged.
 
 Branch B:
 
